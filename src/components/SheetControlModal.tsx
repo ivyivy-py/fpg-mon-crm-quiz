@@ -10,6 +10,7 @@ interface SheetControlModalProps {
   onResetQuestions: () => void;
   sheetConfig: SheetConfig;
   onUpdateSheetConfig: (config: SheetConfig) => void;
+  onResetStudentProgress?: () => void;
 }
 
 export const SheetControlModal: React.FC<SheetControlModalProps> = ({
@@ -20,6 +21,7 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
   onResetQuestions,
   sheetConfig,
   onUpdateSheetConfig,
+  onResetStudentProgress,
 }) => {
   const [csvUrl, setCsvUrl] = useState('');
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -305,6 +307,33 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
               </p>
             )}
           </div>
+
+          {/* Reset Student Entries / Clear Local Test Data */}
+          {onResetStudentProgress && (
+            <div className="bg-rose-50 border-2 border-rose-200 rounded-3xl p-4 flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-0.5">
+                <p className="text-xs font-black text-rose-900 uppercase tracking-wider flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">delete_sweep</span>
+                  Reset Student Entries & Test Data
+                </p>
+                <p className="text-[11px] font-semibold text-rose-700">
+                  Clears local test scores, unlocked badges, and resets all student progress back to 0 (Gym 1 only).
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  if (onResetStudentProgress) {
+                    onResetStudentProgress();
+                    setSyncStatus('Student entries and test progress have been completely reset to 0!');
+                  }
+                }}
+                className="bg-rose-600 hover:bg-rose-700 text-white font-black text-xs uppercase tracking-wider px-4 py-2 rounded-2xl shadow-sm transition-all cursor-pointer active:scale-95 flex items-center gap-1"
+              >
+                <span className="material-symbols-outlined text-sm">restart_alt</span>
+                Reset All Progress to 0
+              </button>
+            </div>
+          )}
 
           {/* Questions & Answer Key Control Table */}
           <div className="space-y-3">

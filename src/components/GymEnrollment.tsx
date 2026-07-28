@@ -4,11 +4,13 @@ import { Clan, Trainer } from '../types';
 interface GymEnrollmentProps {
   trainer: Trainer;
   onStartTraining: (handle: string, clan: Clan) => void;
+  onResetStudentProgress?: () => void;
 }
 
 export const GymEnrollment: React.FC<GymEnrollmentProps> = ({
   trainer,
   onStartTraining,
+  onResetStudentProgress,
 }) => {
   const [handle, setHandle] = useState(trainer.handle === 'Master Trainer Red' ? 'Student Trainer' : trainer.handle);
   const [selectedClan, setSelectedClan] = useState<Clan>(trainer.clan || 'Blue Clan');
@@ -170,10 +172,19 @@ export const GymEnrollment: React.FC<GymEnrollmentProps> = ({
                 <span className="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
               </button>
 
-              <div className="text-center pt-2">
+              <div className="text-center pt-2 space-y-2">
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
                   Secure connection established • SFMC 2026
                 </p>
+                {onResetStudentProgress && (
+                  <button
+                    type="button"
+                    onClick={onResetStudentProgress}
+                    className="text-[11px] font-bold text-rose-600 hover:text-rose-800 underline uppercase tracking-wider cursor-pointer"
+                  >
+                    Clear Previous Test Data / Reset Progress
+                  </button>
+                )}
               </div>
             </form>
           </div>

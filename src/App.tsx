@@ -124,49 +124,84 @@ export default function App() {
   useEffect(() => {
     if (quizResult) {
       localStorage.setItem(RESULT_STORAGE_KEY, JSON.stringify(quizResult));
+    } else {
+      localStorage.removeItem(RESULT_STORAGE_KEY);
     }
   }, [quizResult]);
 
   const handleStartTraining = (handle: string, clan: Clan) => {
     const isAdmin = handle.trim().toUpperCase() === 'TWILIGHTIVY';
-    const updatedTrainer: Trainer = {
-      ...trainer,
-      handle,
-      clan,
-      completedGyms: isAdmin ? [1, 2, 3, 4, 5] : (trainer.handle === handle ? (trainer.completedGyms || []) : []),
-      avatarUrl: clan === 'Red Clan'
-        ? 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s'
-        : 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAczbgzKxSq7CZThhAsiNrQJGPVC9CckeC-65V3i3PBjrd2N89XB5pokPeUJnEwKjcspa5NwOUzgoBc59WwRtjA5M4qYzG5cjMo0BL6aPeYT9MqdfflrXLr8KtHv9EVCaQBVr8EPIY0OCJeCx1Yj5ve2otRwitquYIGGJXeR-tMZIg9Il4R2UJIu2u11yNwLNHqRj93n1ZMzcGUw7Mi9YHVLGeCO0fPOW4ECrEOJdIH_8ril5-DwFG',
-    };
-    setTrainer(updatedTrainer);
+    const isSameHandle = trainer.handle.trim().toLowerCase() === handle.trim().toLowerCase();
+
+    if (isAdmin) {
+      setTrainer({
+        ...trainer,
+        handle,
+        clan,
+        completedGyms: [1, 2, 3, 4, 5],
+        avatarUrl: clan === 'Red Clan'
+          ? 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s'
+          : 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAczbgzKxSq7CZThhAsiNrQJGPVC9CckeC-65V3i3PBjrd2N89XB5pokPeUJnEwKjcspa5NwOUzgoBc59WwRtjA5M4qYzG5cjMo0BL6aPeYT9MqdfflrXLr8KtHv9EVCaQBVr8EPIY0OCJeCx1Yj5ve2otRwitquYIGGJXeR-tMZIg9Il4R2UJIu2u11yNwLNHqRj93n1ZMzcGUw7Mi9YHVLGeCO0fPOW4ECrEOJdIH_8ril5-DwFG',
+      });
+      setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlocked: true })));
+    } else {
+      // Student session
+      const existingCompletedGyms = isSameHandle ? (trainer.completedGyms || []) : [];
+      setTrainer({
+        ...trainer,
+        handle,
+        clan,
+        xp: isSameHandle ? trainer.xp : 0,
+        completedGyms: existingCompletedGyms,
+        handsOnPassed: isSameHandle ? trainer.handsOnPassed : false,
+        avatarUrl: clan === 'Red Clan'
+          ? 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s'
+          : 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAczbgzKxSq7CZThhAsiNrQJGPVC9CckeC-65V3i3PBjrd2N89XB5pokPeUJnEwKjcspa5NwOUzgoBc59WwRtjA5M4qYzG5cjMo0BL6aPeYT9MqdfflrXLr8KtHv9EVCaQBVr8EPIY0OCJeCx1Yj5ve2otRwitquYIGGJXeR-tMZIg9Il4R2UJIu2u11yNwLNHqRj93n1ZMzcGUw7Mi9YHVLGeCO0fPOW4ECrEOJdIH_8ril5-DwFG',
+      });
+
+      if (!isSameHandle) {
+        setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlocked: false })));
+        setQuizResult(null);
+        localStorage.removeItem(RESULT_STORAGE_KEY);
+      }
+    }
     setCurrentView('quiz');
   };
 
   const handleResetStudentProgress = () => {
-    setTrainer({
-      ...trainer,
-      handle: trainer.handle.toUpperCase() === 'TWILIGHTIVY' ? 'Student Trainer' : trainer.handle,
+    setTrainer((prev) => ({
+      ...prev,
+      handle: prev.handle.toUpperCase() === 'TWILIGHTIVY' ? 'Student Trainer' : prev.handle,
       xp: 0,
       completedGyms: [],
       handsOnPassed: false,
-    });
+    }));
+    setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlocked: false })));
     setQuizResult(null);
     localStorage.removeItem(RESULT_STORAGE_KEY);
+    localStorage.removeItem(BADGES_STORAGE_KEY);
   };
 
   const handleToggleInstructorRole = () => {
     if (trainer.handle.toUpperCase() === 'TWILIGHTIVY') {
-      setTrainer({
-        ...trainer,
+      setTrainer((prev) => ({
+        ...prev,
         handle: 'Student Trainer',
+        xp: 0,
         completedGyms: [],
-      });
+        handsOnPassed: false,
+      }));
+      setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlocked: false })));
+      setQuizResult(null);
+      localStorage.removeItem(RESULT_STORAGE_KEY);
+      localStorage.removeItem(BADGES_STORAGE_KEY);
     } else {
-      setTrainer({
-        ...trainer,
+      setTrainer((prev) => ({
+        ...prev,
         handle: 'TWILIGHTIVY',
         completedGyms: [1, 2, 3, 4, 5],
-      });
+      }));
+      setBadges(INITIAL_BADGES.map((b) => ({ ...b, unlocked: true })));
     }
   };
 
@@ -375,6 +410,7 @@ export default function App() {
           <GymEnrollment
             trainer={trainer}
             onStartTraining={handleStartTraining}
+            onResetStudentProgress={handleResetStudentProgress}
           />
         )}
 
@@ -434,6 +470,7 @@ export default function App() {
         onResetQuestions={handleResetQuestions}
         sheetConfig={sheetConfig}
         onUpdateSheetConfig={setSheetConfig}
+        onResetStudentProgress={handleResetStudentProgress}
       />
 
       {/* Universal Footer */}

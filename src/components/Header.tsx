@@ -84,7 +84,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
             }`}
           >
-            Inventory
+            Your Collection
           </button>
         </nav>
 

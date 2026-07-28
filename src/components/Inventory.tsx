@@ -21,7 +21,7 @@ export const Inventory: React.FC<InventoryProps> = ({
         <div className="space-y-2">
           <div className="inline-flex items-center gap-1.5 bg-orange-100 text-orange-700 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-orange-200">
             <span className="material-symbols-outlined text-sm">shield</span>
-            Trainer Badges Inventory
+            Your Collection
           </div>
           <h1 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight">
             {trainer.handle}'s Badges & Trophy Cabinet
