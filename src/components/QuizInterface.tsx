@@ -254,35 +254,79 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
         </div>
       </div>
 
-      {/* Top Header Controls for Selected Gym */}
-      <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 px-6 rounded-3xl border-2 border-indigo-100 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3.5 py-1.5 rounded-full uppercase tracking-wider border-2 border-indigo-200">
-            {currentGymSection.bubbleLabel}: {currentGymSection.shortTitle}
-          </span>
-          <span className="text-[11px] font-extrabold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 flex items-center gap-1">
-            <span className="material-symbols-outlined text-xs text-amber-600">bolt</span>
-            Speed Bonus Active (Faster = Higher XP & Leaderboard Rank)
-          </span>
-          {isAdmin && sheetConfig?.activeGym === selectedGymId && (
-            <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-200 uppercase tracking-widest">
-              Active in Config!B1
-            </span>
-          )}
-        </div>
+      {/* GYM CONTENT AREA: Checked for Unlock Permission */}
+      {!checkGymUnlocked(selectedGymId) ? (
+        <div className="bg-white rounded-[40px] p-8 md:p-14 text-center space-y-6 border-4 border-amber-200 shadow-2xl relative overflow-hidden my-4 animate-in fade-in zoom-in-95">
+          {/* Subtle Ambient Background Gradients */}
+          <div className="absolute -right-20 -top-20 w-64 h-64 bg-amber-100 rounded-full blur-3xl opacity-50 pointer-events-none" />
+          <div className="absolute -left-20 -bottom-20 w-64 h-64 bg-indigo-50 rounded-full blur-3xl opacity-50 pointer-events-none" />
 
-        {selectedGymId !== 5 && (
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-black text-slate-500 uppercase tracking-wider">
-              Question {currentIndex + 1} of {gymQuestions.length}
-            </span>
-            <div className="flex items-center gap-1.5 bg-amber-50 text-amber-900 border-2 border-amber-200 px-3.5 py-1.5 rounded-xl text-xs font-black font-mono shadow-xs">
-              <span className="material-symbols-outlined text-sm text-amber-600">timer</span>
-              <span>{formatTime(timeLeft)}</span>
+          <div className="relative z-10 space-y-6">
+            <div className="w-24 h-24 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto border-4 border-amber-200 shadow-inner">
+              <span className="material-symbols-outlined text-5xl">lock</span>
+            </div>
+
+            <div className="space-y-3 max-w-xl mx-auto">
+              <div className="inline-flex items-center gap-2 bg-amber-100 text-amber-900 border-2 border-amber-300 px-4 py-1 rounded-full text-xs font-black uppercase tracking-wider">
+                <span className="material-symbols-outlined text-sm">lock</span>
+                Gym {selectedGymId} Locked
+              </div>
+
+              <h2 className="text-2xl md:text-3xl font-black text-slate-800 tracking-tight">
+                Clear the previous gym and the learning to unlock
+              </h2>
+
+              <p className="text-xs md:text-sm font-semibold text-slate-600 leading-relaxed max-w-md mx-auto">
+                As a Student, you must complete and pass all questions in <strong className="text-indigo-600">Gym {selectedGymId - 1}</strong> first before unlocking Gym {selectedGymId}.
+              </p>
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setSelectedGymId(Math.max(1, selectedGymId - 1));
+                  setCurrentIndex(0);
+                  setIsAnswerSubmitted(false);
+                }}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider px-8 py-3.5 rounded-2xl shadow-lg shadow-indigo-200 transition-all cursor-pointer active:scale-95 inline-flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-base">arrow_back</span>
+                <span>Return to Gym {selectedGymId - 1}</span>
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <>
+          {/* Top Header Controls for Selected Gym */}
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 px-6 rounded-3xl border-2 border-indigo-100 shadow-sm">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3.5 py-1.5 rounded-full uppercase tracking-wider border-2 border-indigo-200">
+                {currentGymSection.bubbleLabel}: {currentGymSection.shortTitle}
+              </span>
+              <span className="text-[11px] font-extrabold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 flex items-center gap-1">
+                <span className="material-symbols-outlined text-xs text-amber-600">bolt</span>
+                Speed Bonus Active (Faster = Higher XP & Leaderboard Rank)
+              </span>
+              {isAdmin && sheetConfig?.activeGym === selectedGymId && (
+                <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-200 uppercase tracking-widest">
+                  Active in Config!B1
+                </span>
+              )}
+            </div>
+
+            {selectedGymId !== 5 && (
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                  Question {currentIndex + 1} of {gymQuestions.length}
+                </span>
+                <div className="flex items-center gap-1.5 bg-amber-50 text-amber-900 border-2 border-amber-200 px-3.5 py-1.5 rounded-xl text-xs font-black font-mono shadow-xs">
+                  <span className="material-symbols-outlined text-sm text-amber-600">timer</span>
+                  <span>{formatTime(timeLeft)}</span>
+                </div>
+              </div>
+            )}
+          </div>
 
       {/* GYM 5: GROUP HANDS-ON SESSION VIEW */}
       {selectedGymId === 5 ? (
@@ -525,6 +569,8 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
               </div>
             </div>
           )}
+        </>
+      )}
         </>
       )}
 
