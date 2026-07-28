@@ -1,0 +1,6 @@
+{
+  "name": "SFMC Training - FPG-mon Arena",
+  "description": "Salesforce Marketing Cloud training portal with FPG-Mon Arena quiz, Leaderboard, Inventory badges, Certificate generation, and Google Sheet answer control.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
