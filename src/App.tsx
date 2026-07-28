@@ -137,17 +137,28 @@ export default function App() {
 
   const handleCompleteQuiz = (
     answers: Record<number, 'A' | 'B' | 'C' | 'D'>,
-    completedGymsInput?: number[]
+    completedGymsInput?: number[],
+    questionTimesInput?: Record<number, number>
   ) => {
     let score = 0;
     let earnedXP = 0;
+    let totalTime = 0;
     const sectionScores: Record<string, { correct: number; total: number }> = {};
+    const mergedQuestionTimes = { ...(quizResult?.questionTimes || {}), ...(questionTimesInput || {}) };
 
     questions.forEach((q) => {
       const isCorrect = answers[q.id] === q.correctOption;
+      const timeTaken = mergedQuestionTimes[q.id] || 45;
+
+      if (answers[q.id] !== undefined) {
+        totalTime += timeTaken;
+      }
+
       if (isCorrect) {
         score += 1;
-        earnedXP += q.xp;
+        // Speed bonus formula: up to +50 XP for fast answers under 15s
+        const speedBonus = Math.max(5, Math.floor((165 - Math.min(timeTaken, 165)) / 3));
+        earnedXP += q.xp + speedBonus;
       }
 
       if (!sectionScores[q.sectionName]) {
@@ -160,7 +171,7 @@ export default function App() {
     });
 
     // Derive completedGyms set
-    const prevGyms = trainer.completedGyms || [1, 2, 3, 4];
+    const prevGyms = trainer.completedGyms || [];
     const newGymsSet = new Set<number>([...prevGyms, ...(completedGymsInput || [sheetConfig.activeGym])]);
     const finalCompletedGyms = Array.from(newGymsSet);
     const handsOnPassed = finalCompletedGyms.includes(5) || trainer.handsOnPassed;
@@ -177,6 +188,8 @@ export default function App() {
       sectionScores,
       completedGyms: finalCompletedGyms,
       handsOnPassed,
+      questionTimes: mergedQuestionTimes,
+      totalTimeSeconds: totalTime,
     };
 
     setQuizResult(newResult);
@@ -208,7 +221,7 @@ export default function App() {
 
     setBadges(updatedBadges);
 
-    // Update Trainer XP
+    // Update Trainer XP and total time
     const unlockedCount = updatedBadges.filter((b) => b.unlocked).length;
     setTrainer((prev) => ({
       ...prev,
@@ -217,6 +230,7 @@ export default function App() {
       badges: updatedBadges.filter((b) => b.unlocked).map((b) => b.name),
       completedGyms: finalCompletedGyms,
       handsOnPassed,
+      totalTimeSeconds: totalTime,
     }));
 
     // Update Leaderboard Entry
@@ -230,12 +244,18 @@ export default function App() {
         scoreXP: Math.max(trainer.xp, earnedXP),
         passedCount: score,
         badgeCount: unlockedCount,
+        totalTimeSeconds: totalTime,
         completedGyms: finalCompletedGyms,
         handsOnPassed,
         isCurrentUser: true,
       };
       const merged = [...filtered, userEntry];
-      merged.sort((a, b) => b.scoreXP - a.scoreXP);
+      merged.sort((a, b) => {
+        if (b.scoreXP !== a.scoreXP) return b.scoreXP - a.scoreXP;
+        const timeA = a.totalTimeSeconds ?? 9999;
+        const timeB = b.totalTimeSeconds ?? 9999;
+        return timeA - timeB;
+      });
       return merged;
     });
 
@@ -284,6 +304,7 @@ export default function App() {
 
         {currentView === 'quiz' && (
           <QuizInterface
+            trainer={trainer}
             questions={questions}
             onCompleteQuiz={handleCompleteQuiz}
             onOpenSheetControl={() => setIsSheetModalOpen(true)}

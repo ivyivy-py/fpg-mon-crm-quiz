@@ -327,9 +327,9 @@ export const INITIAL_BADGES: Badge[] = [
 ];
 
 export const INITIAL_LEADERBOARD = [
-  { id: '1', handle: 'Master Trainer Red', clan: 'Red Clan' as const, avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s', scoreXP: 950, passedCount: 12, badgeCount: 5 },
-  { id: '2', handle: 'Trainer Blue_Oak', clan: 'Blue Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', scoreXP: 880, passedCount: 11, badgeCount: 4 },
-  { id: '3', handle: 'Cynthia_SFMC', clan: 'Red Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80', scoreXP: 850, passedCount: 10, badgeCount: 4 },
-  { id: '4', handle: 'Lance_CRM', clan: 'Blue Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', scoreXP: 780, passedCount: 9, badgeCount: 3 },
-  { id: '5', handle: 'Ash_Ketchum_SFMC', clan: 'Red Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', scoreXP: 720, passedCount: 8, badgeCount: 3 }
+  { id: '1', handle: 'Master Trainer Red', clan: 'Red Clan' as const, avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s', scoreXP: 950, passedCount: 12, badgeCount: 5, totalTimeSeconds: 142 },
+  { id: '2', handle: 'Trainer Blue_Oak', clan: 'Blue Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', scoreXP: 880, passedCount: 11, badgeCount: 4, totalTimeSeconds: 178 },
+  { id: '3', handle: 'Cynthia_SFMC', clan: 'Red Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=200&q=80', scoreXP: 850, passedCount: 10, badgeCount: 4, totalTimeSeconds: 195 },
+  { id: '4', handle: 'Lance_CRM', clan: 'Blue Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', scoreXP: 780, passedCount: 9, badgeCount: 3, totalTimeSeconds: 230 },
+  { id: '5', handle: 'Ash_Ketchum_SFMC', clan: 'Red Clan' as const, avatarUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', scoreXP: 720, passedCount: 8, badgeCount: 3, totalTimeSeconds: 285 }
 ];

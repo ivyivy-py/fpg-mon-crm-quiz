@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Trainer, Badge, Question, QuizResult, ViewState, SheetConfig } from '../types';
 import { GYM_SECTIONS } from '../data/quizData';
 
@@ -21,6 +21,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
   onNavigate,
   onOpenSheetControl,
 }) => {
+  const [lockedNoticeGym, setLockedNoticeGym] = useState<number | null>(null);
+
+  const isAdmin = trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY';
   const unlockedBadges = badges.filter((b) => b.unlocked).length;
   const totalQuestions = questions.length;
   const passedQuestions = quizResult ? quizResult.score : 0;
@@ -28,27 +31,76 @@ export const Dashboard: React.FC<DashboardProps> = ({
 
   const activeGym = sheetConfig?.activeGym || 1;
 
+  const checkGymUnlocked = (gymId: number) => {
+    if (isAdmin) return true;
+    if (gymId === 1) return true;
+    const completed = trainer.completedGyms || [];
+    return completed.includes(gymId - 1);
+  };
+
+  const handleGymClick = (gymId: number) => {
+    if (checkGymUnlocked(gymId)) {
+      onNavigate('quiz');
+    } else {
+      setLockedNoticeGym(gymId);
+    }
+  };
+
   return (
     <div className="min-h-[calc(100vh-80px)] px-4 md:px-12 py-8 max-w-5xl mx-auto space-y-8">
+      {/* Locked Gym Alert Modal for Students */}
+      {lockedNoticeGym !== null && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border-4 border-amber-300 shadow-2xl space-y-5 text-center relative animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto border-2 border-amber-200">
+              <span className="material-symbols-outlined text-3xl">lock</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
+                Gym {lockedNoticeGym} is Locked!
+              </h3>
+              <p className="text-xs font-semibold text-slate-600 leading-relaxed">
+                As a Student, you must complete and pass <strong className="text-indigo-600 font-extrabold">Gym {lockedNoticeGym - 1}</strong> first before unlocking Gym {lockedNoticeGym}.
+              </p>
+            </div>
+            <button
+              onClick={() => setLockedNoticeGym(null)}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl uppercase tracking-wider text-xs shadow-md cursor-pointer"
+            >
+              Got it! Return to Arena
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero Welcome Banner */}
       <div className="glass-card rounded-[36px] p-6 md:p-8 border-2 border-indigo-100 shadow-xl shadow-indigo-100/50 relative overflow-hidden bg-white">
         <div className="flex flex-wrap items-center justify-between gap-6 relative z-10">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-700 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-indigo-200">
-                <span className="material-symbols-outlined text-sm">space_dashboard</span>
-                Trainer Control Center
-              </span>
-              <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-emerald-200">
-                <span className="material-symbols-outlined text-sm">toggle_on</span>
-                Config!B1: Active Gym {activeGym}
-              </span>
+              {isAdmin ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-amber-300">
+                    <span className="material-symbols-outlined text-sm">shield_person</span>
+                    Instructor Access (TWILIGHTIVY)
+                  </span>
+                  <span className="inline-flex items-center gap-1 bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-emerald-200">
+                    <span className="material-symbols-outlined text-sm">toggle_on</span>
+                    Config!B1: Active Gym {activeGym}
+                  </span>
+                </>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-700 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-indigo-200">
+                  <span className="material-symbols-outlined text-sm">school</span>
+                  Student Arena Trainer
+                </span>
+              )}
             </div>
             <h1 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight">
               Welcome back, {trainer.handle}!
             </h1>
             <p className="text-xs md:text-sm font-semibold text-slate-500 max-w-xl">
-              Complete all 5 Gym sections (including Gym 5 Group Hands-on) to earn your FPG-mon Journey Master badge!
+              Complete all 5 Gym sections sequentially (including Gym 5 Group Hands-on) to earn your FPG-mon Journey Master certificate!
             </p>
           </div>
 
@@ -58,16 +110,18 @@ export const Dashboard: React.FC<DashboardProps> = ({
               className="bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-2xl shadow-lg shadow-indigo-200 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
             >
               <span className="material-symbols-outlined text-lg">play_circle</span>
-              <span>{quizResult ? 'Enter Active Gym' : 'Start Gym Arena'}</span>
+              <span>{quizResult ? 'Enter Gym Arena' : 'Start Gym Arena'}</span>
             </button>
 
-            <button
-              onClick={onOpenSheetControl}
-              className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-200 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
-            >
-              <span className="material-symbols-outlined text-lg">table_chart</span>
-              <span>Config & Sheet</span>
-            </button>
+            {isAdmin && (
+              <button
+                onClick={onOpenSheetControl}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-black text-xs uppercase tracking-wider px-6 py-3.5 rounded-2xl shadow-lg shadow-emerald-200 flex items-center gap-2 cursor-pointer transition-all active:scale-95"
+              >
+                <span className="material-symbols-outlined text-lg">table_chart</span>
+                <span>Config & Sheet</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -124,35 +178,39 @@ export const Dashboard: React.FC<DashboardProps> = ({
               SFMC Arena Training Gyms (1 to 5)
             </h2>
             <p className="text-xs font-semibold text-slate-500">
-              Each Gym section features core questions or group hands-on verification.
+              Students must pass each Gym section sequentially to unlock the next!
             </p>
           </div>
 
-          <button
-            onClick={onOpenSheetControl}
-            className="text-xs font-black text-indigo-600 hover:text-indigo-800 bg-indigo-50 border-2 border-indigo-100 px-4 py-2 rounded-xl flex items-center gap-1.5 uppercase tracking-wider cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-base">tune</span>
-            <span>Switch Active Gym (Config!B1)</span>
-          </button>
+          {isAdmin && (
+            <button
+              onClick={onOpenSheetControl}
+              className="text-xs font-black text-indigo-600 hover:text-indigo-800 bg-indigo-50 border-2 border-indigo-100 px-4 py-2 rounded-xl flex items-center gap-1.5 uppercase tracking-wider cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-base">tune</span>
+              <span>Switch Active Gym (Config!B1)</span>
+            </button>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {GYM_SECTIONS.map((gym) => {
-            const isCurrentActive = activeGym === gym.id;
-            const gymBadge = badges.find((b) => b.gymId === gym.id);
-            const isUnlocked = gymBadge?.unlocked;
+            const isCurrentActive = isAdmin && activeGym === gym.id;
+            const isUnlocked = checkGymUnlocked(gym.id);
+            const isPassed = (trainer.completedGyms || []).includes(gym.id);
 
             return (
               <div
                 key={gym.id}
-                onClick={() => onNavigate('quiz')}
+                onClick={() => handleGymClick(gym.id)}
                 className={`p-5 rounded-3xl border-2 transition-all cursor-pointer relative flex flex-col justify-between space-y-4 ${
                   isCurrentActive
                     ? 'bg-indigo-50/90 border-indigo-500 shadow-lg shadow-indigo-100/80 ring-2 ring-indigo-400'
+                    : isPassed
+                    ? 'bg-emerald-50/60 border-emerald-200'
                     : isUnlocked
-                    ? 'bg-emerald-50/50 border-emerald-200'
-                    : 'bg-slate-50 border-slate-200 hover:border-indigo-300'
+                    ? 'bg-white border-indigo-200 hover:border-indigo-400 shadow-xs'
+                    : 'bg-slate-100/80 border-slate-200 opacity-80'
                 }`}
               >
                 <div className="space-y-3">
@@ -161,7 +219,9 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider border-2 ${
                       isCurrentActive
                         ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                        : isUnlocked
+                        ? 'bg-indigo-100 text-indigo-700 border-indigo-200'
+                        : 'bg-slate-200 text-slate-500 border-slate-300'
                     }`}>
                       {gym.bubbleLabel}
                     </span>
@@ -172,10 +232,17 @@ export const Dashboard: React.FC<DashboardProps> = ({
                       </span>
                     )}
 
-                    {isUnlocked && !isCurrentActive && (
+                    {isPassed && !isCurrentActive && (
                       <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1">
                         <span className="material-symbols-outlined text-xs">check_circle</span>
                         Passed
+                      </span>
+                    )}
+
+                    {!isUnlocked && (
+                      <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-md bg-slate-200 text-slate-600 border border-slate-300 flex items-center gap-1">
+                        <span className="material-symbols-outlined text-xs">lock</span>
+                        Locked
                       </span>
                     )}
                   </div>
@@ -184,9 +251,13 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     <div className={`w-10 h-10 rounded-2xl flex items-center justify-center border-2 shrink-0 ${
                       isCurrentActive
                         ? 'bg-indigo-600 text-white border-indigo-600'
-                        : 'bg-white text-indigo-600 border-indigo-200'
+                        : isUnlocked
+                        ? 'bg-white text-indigo-600 border-indigo-200'
+                        : 'bg-slate-200 text-slate-500 border-slate-300'
                     }`}>
-                      <span className="material-symbols-outlined text-xl">{gym.icon}</span>
+                      <span className="material-symbols-outlined text-xl">
+                        {isUnlocked ? gym.icon : 'lock'}
+                      </span>
                     </div>
                     <div>
                       <h3 className="font-black text-sm text-slate-800 leading-snug">{gym.name}</h3>
@@ -199,9 +270,11 @@ export const Dashboard: React.FC<DashboardProps> = ({
                   <span className="text-slate-400 uppercase tracking-widest text-[10px]">
                     {gym.isHandsOn ? 'Group Workshop' : '3 Journey Qs'}
                   </span>
-                  <span className="text-indigo-600 flex items-center gap-1 hover:underline">
-                    <span>Enter Gym</span>
-                    <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                  <span className={`flex items-center gap-1 ${isUnlocked ? 'text-indigo-600 hover:underline' : 'text-slate-400'}`}>
+                    <span>{isUnlocked ? 'Enter Gym' : `Pass Gym ${gym.id - 1}`}</span>
+                    <span className="material-symbols-outlined text-xs">
+                      {isUnlocked ? 'arrow_forward' : 'lock'}
+                    </span>
                   </span>
                 </div>
               </div>
@@ -235,14 +308,14 @@ export const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         <div
-          onClick={onOpenSheetControl}
+          onClick={() => onNavigate('inventory')}
           className="glass-card rounded-[32px] p-6 border-2 border-indigo-100 bg-white shadow-md hover:shadow-xl transition-all cursor-pointer space-y-3 group"
         >
           <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center group-hover:scale-110 transition-transform font-bold">
-            <span className="material-symbols-outlined text-2xl">table_view</span>
+            <span className="material-symbols-outlined text-2xl">military_tech</span>
           </div>
-          <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight">Answer Spreadsheet</h3>
-          <p className="text-xs font-medium text-slate-500 leading-relaxed">Access Google Sheet answer controls and edit explanations live.</p>
+          <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight">Trophy Cabinet</h3>
+          <p className="text-xs font-medium text-slate-500 leading-relaxed">Check earned badges across all 5 SFMC Training Gyms.</p>
         </div>
       </div>
     </div>

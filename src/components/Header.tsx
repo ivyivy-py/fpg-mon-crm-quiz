@@ -20,6 +20,8 @@ export const Header: React.FC<HeaderProps> = ({
   quizProgress,
   onOpenSheetControl,
 }) => {
+  const isAdmin = trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY';
+
   return (
     <header className="bg-white sticky top-0 z-50 border-b-4 border-indigo-200 shadow-sm px-4 md:px-10 h-20 flex justify-between items-center w-full">
       <div 
@@ -84,14 +86,17 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
         </nav>
 
-        <button
-          onClick={onOpenSheetControl}
-          title="Quiz Answer & Control Spreadsheet"
-          className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-100 transition-all active:scale-95 cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-base">table_chart</span>
-          <span className="hidden sm:inline">Answers & Sheet</span>
-        </button>
+        {/* Answers & Sheet Control - Secretly available ONLY for TWILIGHTIVY */}
+        {isAdmin && (
+          <button
+            onClick={onOpenSheetControl}
+            title="Quiz Answer & Control Spreadsheet (Instructor Secret Access)"
+            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-100 transition-all active:scale-95 cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-base">table_chart</span>
+            <span className="hidden sm:inline">Answers & Sheet</span>
+          </button>
+        )}
 
         <div className="flex items-center gap-2">
           <div 
@@ -108,7 +113,14 @@ export const Header: React.FC<HeaderProps> = ({
               />
             </div>
             <div className="hidden sm:flex flex-col text-left">
-              <span className="text-xs font-black text-slate-800 leading-tight">{trainer.handle}</span>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-black text-slate-800 leading-tight">{trainer.handle}</span>
+                {isAdmin && (
+                  <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-black px-1.5 py-0.2 rounded uppercase">
+                    Instructor
+                  </span>
+                )}
+              </div>
               <span className={`text-[10px] font-extrabold uppercase tracking-widest ${
                 trainer.clan === 'Red Clan' ? 'text-orange-500' : 'text-indigo-600'
               }`}>

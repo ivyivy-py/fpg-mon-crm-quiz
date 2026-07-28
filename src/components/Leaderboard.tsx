@@ -24,6 +24,22 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
   const redPercent = Math.round((redClanScore / totalScore) * 100);
   const bluePercent = 100 - redPercent;
 
+  const sortedEntries = [...entries].sort((a, b) => {
+    if (b.scoreXP !== a.scoreXP) return b.scoreXP - a.scoreXP;
+    const timeA = a.totalTimeSeconds ?? 9999;
+    const timeB = b.totalTimeSeconds ?? 9999;
+    if (timeA !== timeB) return timeA - timeB;
+    return b.passedCount - a.passedCount;
+  });
+
+  const formatTimeLabel = (seconds?: number) => {
+    if (!seconds || seconds <= 0) return '—';
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    if (mins > 0) return `${mins}m ${secs}s`;
+    return `${secs}s`;
+  };
+
   return (
     <div className="min-h-[calc(100vh-80px)] px-4 md:px-12 py-8 max-w-5xl mx-auto space-y-8">
       {/* Header Banner */}
@@ -49,6 +65,24 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
             <span className="material-symbols-outlined text-lg">play_arrow</span>
             <span>Enter Quiz Arena</span>
           </button>
+        </div>
+
+        {/* Speed Tiebreaker Explanation Card */}
+        <div className="bg-amber-50 border-2 border-amber-200 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-amber-900">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-amber-200 text-amber-700 flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined text-lg">bolt</span>
+            </div>
+            <div>
+              <span className="text-xs font-black uppercase tracking-wider block">Speed Tiebreaker System Active</span>
+              <p className="text-[11px] font-semibold text-amber-800">
+                Correct answers submitted faster earn higher <b>Speed Bonus XP</b>. Equal XP scores are tiebroken by <b>faster completion time</b>!
+              </p>
+            </div>
+          </div>
+          <span className="text-[10px] font-black uppercase bg-amber-200 text-amber-900 px-3 py-1 rounded-lg border border-amber-300">
+            Clear Winners Engine
+          </span>
         </div>
 
         {/* Clan Battle Score Bar */}
@@ -95,12 +129,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
                 <th className="py-4 px-4">Trainer Handle</th>
                 <th className="py-4 px-4">Clan</th>
                 <th className="py-4 px-4">Passed Qs</th>
+                <th className="py-4 px-4">Completion Time</th>
                 <th className="py-4 px-4">Badges</th>
                 <th className="py-4 px-4 text-right">Total XP</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-slate-100 text-sm font-bold">
-              {entries.map((entry, idx) => {
+              {sortedEntries.map((entry, idx) => {
                 const rank = idx + 1;
                 const isUser = entry.handle === currentTrainer.handle;
 
@@ -158,6 +193,13 @@ export const Leaderboard: React.FC<LeaderboardProps> = ({
 
                     <td className="py-4 px-4 text-slate-600 font-extrabold">
                       <span className="font-black text-slate-800">{entry.passedCount}</span> / 12
+                    </td>
+
+                    <td className="py-4 px-4">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-black bg-amber-50 text-amber-900 border border-amber-200 px-3 py-1 rounded-xl">
+                        <span className="material-symbols-outlined text-xs text-amber-600">timer</span>
+                        <span>{formatTimeLabel(entry.totalTimeSeconds)}</span>
+                      </span>
                     </td>
 
                     <td className="py-4 px-4">

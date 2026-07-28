@@ -1,39 +1,62 @@
 import React, { useState, useEffect } from 'react';
-import { Question, SheetConfig } from '../types';
+import { Question, SheetConfig, Trainer } from '../types';
 import { GYM_SECTIONS } from '../data/quizData';
 import confetti from 'canvas-confetti';
 
 interface QuizInterfaceProps {
+  trainer: Trainer;
   questions: Question[];
-  onCompleteQuiz: (answers: Record<number, 'A' | 'B' | 'C' | 'D'>, completedGyms?: number[]) => void;
+  onCompleteQuiz: (answers: Record<number, 'A' | 'B' | 'C' | 'D'>, completedGyms?: number[], questionTimes?: Record<number, number>) => void;
   onOpenSheetControl: () => void;
   sheetConfig?: SheetConfig;
 }
 
 export const QuizInterface: React.FC<QuizInterfaceProps> = ({
+  trainer,
   questions,
   onCompleteQuiz,
   onOpenSheetControl,
   sheetConfig,
 }) => {
-  const initialGym = sheetConfig?.activeGym || 1;
-  const [selectedGymId, setSelectedGymId] = useState<number>(initialGym);
+  const isAdmin = trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY';
 
-  // Sync selected gym if sheetConfig.activeGym changes
+  const checkGymUnlocked = (gymId: number) => {
+    if (isAdmin) return true;
+    if (gymId === 1) return true;
+    const completed = trainer.completedGyms || [];
+    return completed.includes(gymId - 1);
+  };
+
+  const initialGym = sheetConfig?.activeGym && checkGymUnlocked(sheetConfig.activeGym) ? sheetConfig.activeGym : 1;
+  const [selectedGymId, setSelectedGymId] = useState<number>(initialGym);
+  const [lockedNoticeGym, setLockedNoticeGym] = useState<number | null>(null);
+
+  // Sync selected gym if sheetConfig.activeGym changes (for admin or unlocked student)
   useEffect(() => {
-    if (sheetConfig?.activeGym) {
+    if (sheetConfig?.activeGym && checkGymUnlocked(sheetConfig.activeGym)) {
       setSelectedGymId(sheetConfig.activeGym);
     }
   }, [sheetConfig?.activeGym]);
+
+  const handleSelectGymTab = (gymId: number) => {
+    if (checkGymUnlocked(gymId)) {
+      setSelectedGymId(gymId);
+      setCurrentIndex(0);
+      setIsAnswerSubmitted(false);
+    } else {
+      setLockedNoticeGym(gymId);
+    }
+  };
 
   // Questions for current selected Gym 1-4
   const gymQuestions = questions.filter((q) => q.sectionId === selectedGymId);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, 'A' | 'B' | 'C' | 'D'>>({});
+  const [questionTimes, setQuestionTimes] = useState<Record<number, number>>({});
+  const [lastSubmittedTime, setLastSubmittedTime] = useState<number | null>(null);
   const [currentSelection, setCurrentSelection] = useState<'A' | 'B' | 'C' | 'D' | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [showIssueReported, setShowIssueReported] = useState(false);
-  const [showLockedModal, setShowLockedModal] = useState(false);
 
   // Hands-on Codeword input state for Gym 5 or end of quiz
   const [userCodeword, setUserCodeword] = useState('');
@@ -68,6 +91,17 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const getSpeedBonus = (seconds: number) => {
+    return Math.max(5, Math.floor((165 - Math.min(seconds, 165)) / 3));
+  };
+
+  const getSpeedLabel = (seconds: number) => {
+    if (seconds <= 15) return { label: '⚡ Lightning Speed (+50 Max XP)', color: 'bg-amber-100 text-amber-900 border-amber-300' };
+    if (seconds <= 30) return { label: '⏱️ Rapid Response (+45 XP)', color: 'bg-emerald-100 text-emerald-900 border-emerald-300' };
+    if (seconds <= 60) return { label: '🎯 Swift Focus (+35 XP)', color: 'bg-indigo-100 text-indigo-900 border-indigo-300' };
+    return { label: '⌛ Steady Finish (+5-20 XP)', color: 'bg-slate-100 text-slate-800 border-slate-300' };
+  };
+
   const handleSelectOption = (optionId: 'A' | 'B' | 'C' | 'D') => {
     if (isAnswerSubmitted) return;
     setCurrentSelection(optionId);
@@ -75,6 +109,11 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
 
   const handleSubmitAnswer = () => {
     if (!currentSelection || !currentQuestion) return;
+
+    const timeTaken = Math.max(1, 165 - timeLeft);
+    const updatedTimes = { ...questionTimes, [currentQuestion.id]: timeTaken };
+    setQuestionTimes(updatedTimes);
+    setLastSubmittedTime(timeTaken);
 
     const newAnswers = { ...selectedAnswers, [currentQuestion.id]: currentSelection };
     setSelectedAnswers(newAnswers);
@@ -94,7 +133,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
       setCurrentIndex((prev) => prev + 1);
     } else {
       // Completed current Gym questions
-      onCompleteQuiz(selectedAnswers, [selectedGymId]);
+      onCompleteQuiz(selectedAnswers, [selectedGymId], questionTimes);
     }
   };
 
@@ -130,6 +169,31 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
 
   return (
     <div className="min-h-[calc(100vh-80px)] px-4 md:px-12 py-8 max-w-5xl mx-auto space-y-6">
+      {/* Locked Gym Modal Notice for Students */}
+      {lockedNoticeGym !== null && (
+        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full border-4 border-amber-300 shadow-2xl space-y-5 text-center relative animate-in fade-in zoom-in-95">
+            <div className="w-16 h-16 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center mx-auto border-2 border-amber-200">
+              <span className="material-symbols-outlined text-3xl">lock</span>
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
+                Gym {lockedNoticeGym} is Locked!
+              </h3>
+              <p className="text-xs font-semibold text-slate-600 leading-relaxed">
+                As a Student, you must complete and pass <strong className="text-indigo-600 font-extrabold">Gym {lockedNoticeGym - 1}</strong> first before unlocking Gym {lockedNoticeGym}.
+              </p>
+            </div>
+            <button
+              onClick={() => setLockedNoticeGym(null)}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-2xl uppercase tracking-wider text-xs shadow-md cursor-pointer"
+            >
+              Got it! Return to Quiz
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Gym Selector Tabs with Gym 1-5 Bubbles */}
       <div className="bg-white p-3 rounded-3xl border-2 border-indigo-100 shadow-lg space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-2 px-3 pt-1">
@@ -138,44 +202,48 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
             Select Arena Gym Section:
           </span>
 
-          <button
-            onClick={onOpenSheetControl}
-            className="text-[11px] font-black text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer uppercase tracking-wider"
-          >
-            <span className="material-symbols-outlined text-sm">tune</span>
-            Active in Config!B1: Gym {sheetConfig?.activeGym || 1}
-          </button>
+          {isAdmin && (
+            <button
+              onClick={onOpenSheetControl}
+              className="text-[11px] font-black text-emerald-800 bg-emerald-100 hover:bg-emerald-200 border border-emerald-300 px-3 py-1 rounded-xl transition-all flex items-center gap-1 cursor-pointer uppercase tracking-wider"
+            >
+              <span className="material-symbols-outlined text-sm">tune</span>
+              Active in Config!B1: Gym {sheetConfig?.activeGym || 1}
+            </button>
+          )}
         </div>
 
         {/* 5 Gym Tab Buttons */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
           {GYM_SECTIONS.map((gym) => {
             const isSelected = selectedGymId === gym.id;
-            const isConfigActive = sheetConfig?.activeGym === gym.id;
+            const isConfigActive = isAdmin && sheetConfig?.activeGym === gym.id;
+            const isUnlocked = checkGymUnlocked(gym.id);
 
             return (
               <button
                 key={gym.id}
-                onClick={() => {
-                  setSelectedGymId(gym.id);
-                  setCurrentIndex(0);
-                  setIsAnswerSubmitted(false);
-                }}
+                onClick={() => handleSelectGymTab(gym.id)}
                 className={`p-2.5 rounded-2xl border-2 transition-all cursor-pointer flex flex-col items-center gap-1 text-center relative ${
                   isSelected
                     ? 'bg-indigo-600 text-white border-indigo-600 shadow-md font-black'
-                    : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:border-indigo-300'
+                    : isUnlocked
+                    ? 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-indigo-50 hover:border-indigo-300'
+                    : 'bg-slate-100 text-slate-400 border-slate-200 opacity-70'
                 }`}
               >
                 {/* Bubble Badge */}
                 <div className="flex items-center gap-1">
                   <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
-                    isSelected ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'
+                    isSelected ? 'bg-white/20 text-white' : isUnlocked ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-200 text-slate-500'
                   }`}>
                     {gym.bubbleLabel}
                   </span>
                   {isConfigActive && (
                     <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" title="Open" />
+                  )}
+                  {!isUnlocked && (
+                    <span className="material-symbols-outlined text-xs text-slate-400">lock</span>
                   )}
                 </div>
 
@@ -188,11 +256,15 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
 
       {/* Top Header Controls for Selected Gym */}
       <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 px-6 rounded-3xl border-2 border-indigo-100 shadow-sm">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-black text-indigo-700 bg-indigo-100 px-3.5 py-1.5 rounded-full uppercase tracking-wider border-2 border-indigo-200">
             {currentGymSection.bubbleLabel}: {currentGymSection.shortTitle}
           </span>
-          {sheetConfig?.activeGym === selectedGymId && (
+          <span className="text-[11px] font-extrabold text-amber-800 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 flex items-center gap-1">
+            <span className="material-symbols-outlined text-xs text-amber-600">bolt</span>
+            Speed Bonus Active (Faster = Higher XP & Leaderboard Rank)
+          </span>
+          {isAdmin && sheetConfig?.activeGym === selectedGymId && (
             <span className="text-[10px] font-black text-emerald-800 bg-emerald-100 px-2.5 py-1 rounded-md border border-emerald-200 uppercase tracking-widest">
               Active in Config!B1
             </span>
@@ -204,8 +276,8 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
             <span className="text-xs font-black text-slate-500 uppercase tracking-wider">
               Question {currentIndex + 1} of {gymQuestions.length}
             </span>
-            <div className="flex items-center gap-1.5 bg-slate-100 text-slate-800 px-3.5 py-1.5 rounded-xl text-xs font-black font-mono">
-              <span className="material-symbols-outlined text-sm">timer</span>
+            <div className="flex items-center gap-1.5 bg-amber-50 text-amber-900 border-2 border-amber-200 px-3.5 py-1.5 rounded-xl text-xs font-black font-mono shadow-xs">
+              <span className="material-symbols-outlined text-sm text-amber-600">timer</span>
               <span>{formatTime(timeLeft)}</span>
             </div>
           </div>
@@ -303,31 +375,56 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
           {/* Feedback Banner (Shown after submission) */}
           {isAnswerSubmitted && currentQuestion && (
             <div
-              className={`glass-card border-l-8 p-6 rounded-3xl flex items-start gap-4 transition-all duration-300 ${
+              className={`glass-card border-l-8 p-6 rounded-3xl flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all duration-300 ${
                 isCorrect ? 'border-emerald-500 bg-emerald-50' : 'border-rose-500 bg-rose-50'
               }`}
             >
-              <div
-                className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 font-bold ${
-                  isCorrect ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200' : 'bg-rose-500 text-white shadow-md shadow-rose-200'
-                }`}
-              >
-                <span className="material-symbols-outlined text-2xl">
-                  {isCorrect ? 'check_circle' : 'cancel'}
-                </span>
-              </div>
-              <div className="space-y-1">
-                <h4
-                  className={`font-black text-lg uppercase tracking-tight ${
-                    isCorrect ? 'text-emerald-900' : 'text-rose-900'
+              <div className="flex items-start gap-4">
+                <div
+                  className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 font-bold ${
+                    isCorrect ? 'bg-emerald-500 text-white shadow-md shadow-emerald-200' : 'bg-rose-500 text-white shadow-md shadow-rose-200'
                   }`}
                 >
-                  {isCorrect ? 'Excellent! Perfect Answer' : 'Not quite... Keep Learning'}
-                </h4>
-                <p className="text-sm font-semibold leading-relaxed text-slate-700">
-                  {currentQuestion.explanation}
-                </p>
+                  <span className="material-symbols-outlined text-2xl">
+                    {isCorrect ? 'check_circle' : 'cancel'}
+                  </span>
+                </div>
+                <div className="space-y-1">
+                  <h4
+                    className={`font-black text-lg uppercase tracking-tight flex items-center gap-2 ${
+                      isCorrect ? 'text-emerald-900' : 'text-rose-900'
+                    }`}
+                  >
+                    <span>{isCorrect ? 'Excellent! Perfect Answer' : 'Not quite... Keep Learning'}</span>
+                  </h4>
+                  <p className="text-sm font-semibold leading-relaxed text-slate-700 max-w-2xl">
+                    {currentQuestion.explanation}
+                  </p>
+                </div>
               </div>
+
+              {/* Speed Bonus XP Breakdown Badge */}
+              {isCorrect && lastSubmittedTime !== null && (
+                <div className="bg-white/90 border-2 border-emerald-200 p-4 rounded-2xl shrink-0 flex flex-col gap-1.5 min-w-[200px] shadow-sm">
+                  <div className="flex items-center justify-between text-xs font-black text-slate-700">
+                    <span className="uppercase tracking-wider">Score Breakdown:</span>
+                    <span className="text-emerald-600 font-extrabold">{currentQuestion.xp + getSpeedBonus(lastSubmittedTime)} XP</span>
+                  </div>
+                  <div className="text-[11px] font-bold text-slate-600 space-y-0.5">
+                    <div className="flex justify-between">
+                      <span>Base Question XP:</span>
+                      <span className="font-black text-slate-800">+{currentQuestion.xp}</span>
+                    </div>
+                    <div className="flex justify-between text-amber-700 font-black">
+                      <span className="flex items-center gap-0.5">⚡ Speed Bonus:</span>
+                      <span>+{getSpeedBonus(lastSubmittedTime)}</span>
+                    </div>
+                  </div>
+                  <div className={`mt-1 text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border text-center ${getSpeedLabel(lastSubmittedTime).color}`}>
+                    {getSpeedLabel(lastSubmittedTime).label} ({lastSubmittedTime}s)
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

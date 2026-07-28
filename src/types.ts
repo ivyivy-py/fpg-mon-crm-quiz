@@ -36,6 +36,8 @@ export interface QuizResult {
   sectionScores: Record<string, { correct: number; total: number }>;
   completedGyms: number[]; // Array of Gym IDs completed (e.g. [1, 2, 3, 4, 5])
   handsOnPassed: boolean;
+  questionTimes?: Record<number, number>; // questionId -> time taken in seconds
+  totalTimeSeconds?: number;
 }
 
 export interface Trainer {
@@ -46,6 +48,8 @@ export interface Trainer {
   xp: number;
   badges: string[];
   completedGyms: number[];
+  handsOnPassed?: boolean;
+  totalTimeSeconds?: number;
 }
 
 export interface LeaderboardEntry {
@@ -56,6 +60,7 @@ export interface LeaderboardEntry {
   scoreXP: number;
   passedCount: number;
   badgeCount: number;
+  totalTimeSeconds?: number;
   completedGymsCount?: number;
   completedGyms?: number[];
   handsOnPassed?: boolean;
