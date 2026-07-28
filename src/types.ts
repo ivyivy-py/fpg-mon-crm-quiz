@@ -82,6 +82,7 @@ export interface Badge {
 export interface SheetConfig {
   activeGym: number; // 1, 2, 3, 4, 5 (from Config!B1)
   codeword: string;  // Codeword required to pass hands-on / quiz
+  webhookUrl?: string; // Google Apps Script Webhook URL to record student scores
 }
 
 export type ViewState = 'enrollment' | 'quiz' | 'certificate' | 'leaderboard' | 'inventory' | 'dashboard';

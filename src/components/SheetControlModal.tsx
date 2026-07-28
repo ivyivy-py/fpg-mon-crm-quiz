@@ -67,6 +67,13 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
     });
   };
 
+  const handleWebhookChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    onUpdateSheetConfig({
+      ...sheetConfig,
+      webhookUrl: e.target.value,
+    });
+  };
+
   const handleFetchCsv = async () => {
     if (!csvUrl.trim()) {
       setSyncStatus('Please enter a published CSV link from Google Sheets.');
@@ -189,9 +196,9 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
               })}
             </div>
 
-            {/* Codeword Config Field */}
-            <div className="pt-3 border-t-2 border-indigo-100 flex flex-wrap items-center justify-between gap-4">
-              <div className="flex-1 min-w-[240px]">
+            {/* Codeword Config Field & Webhook URL */}
+            <div className="pt-3 border-t-2 border-indigo-100 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
                 <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
                   Instructor Codeword (Required to pass Hands-on / Quiz)
                 </label>
@@ -204,10 +211,72 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
                 />
               </div>
 
-              <div className="text-xs font-semibold text-slate-500 max-w-xs">
-                Give this codeword to students during the session so they can enter it to pass and receive their FPG-MON Journey Master badge!
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-slate-700 mb-1">
+                  Google Apps Script Webhook URL (Auto Student Score Recording)
+                </label>
+                <input
+                  type="text"
+                  value={sheetConfig.webhookUrl || ''}
+                  onChange={handleWebhookChange}
+                  placeholder="Paste Google Apps Script Web App URL..."
+                  className="w-full bg-white border-2 border-slate-200 focus:border-indigo-600 rounded-xl px-3.5 py-2 text-xs font-bold text-slate-800 focus:outline-none"
+                />
               </div>
             </div>
+          </div>
+
+          {/* Apps Script Score Submission Format Helper Card */}
+          <div className="bg-indigo-950 text-white p-5 rounded-3xl border-2 border-indigo-900 space-y-3 shadow-lg">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-amber-400">terminal</span>
+                <span className="text-xs font-black text-amber-300 uppercase tracking-widest">
+                  Google Sheet 17-Column Webhook Format
+                </span>
+              </div>
+              <span className="text-[10px] font-bold bg-indigo-900 text-indigo-200 px-2.5 py-0.5 rounded-full uppercase">
+                17 Fields Auto-Mapped
+              </span>
+            </div>
+
+            <p className="text-xs font-medium text-slate-300 leading-relaxed">
+              When students submit their scores, the app posts to the Webhook with these exact 17 columns: <br/>
+              <code className="text-amber-300 text-[11px]">Timestamp | Trainer_Name | Blue_or_Red | Section_1_Q1_Score ... Section_4_Q3_Score | Total_Score | Rank</code>
+            </p>
+
+            <details className="text-xs group">
+              <summary className="font-black text-indigo-300 cursor-pointer hover:text-white transition-colors flex items-center gap-1">
+                <span>View Google Apps Script (GAS) Code to paste in Extensions &gt; Apps Script</span>
+                <span className="material-symbols-outlined text-sm group-open:rotate-180 transition-transform">expand_more</span>
+              </summary>
+              <pre className="mt-2 bg-slate-900 p-3 rounded-2xl text-[11px] font-mono text-emerald-400 overflow-x-auto border border-slate-800">
+{`function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([
+    data.Timestamp,
+    data.Trainer_Name,
+    data.Blue_or_Red,
+    data.Section_1_Q1_Score,
+    data.Section_1_Q2_Score,
+    data.Section_1_Q3_Score,
+    data.Section_2_Q1_Score,
+    data.Section_2_Q2_Score,
+    data.Section_2_Q3_Score,
+    data.Section_3_Q1_Score,
+    data.Section_3_Q2_Score,
+    data.Section_3_Q3_Score,
+    data.Section_4_Q1_Score,
+    data.Section_4_Q2_Score,
+    data.Section_4_Q3_Score,
+    data.Total_Score,
+    data.Rank
+  ]);
+  return ContentService.createTextOutput(JSON.stringify({result: "success"})).setMimeType(ContentService.MimeType.JSON);
+}`}
+              </pre>
+            </details>
           </div>
 
           {/* Sync via CSV URL */}

@@ -10,7 +10,7 @@ export const GymEnrollment: React.FC<GymEnrollmentProps> = ({
   trainer,
   onStartTraining,
 }) => {
-  const [handle, setHandle] = useState(trainer.handle || 'Master Trainer Red');
+  const [handle, setHandle] = useState(trainer.handle === 'Master Trainer Red' ? 'Student Trainer' : trainer.handle);
   const [selectedClan, setSelectedClan] = useState<Clan>(trainer.clan || 'Blue Clan');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -99,10 +99,22 @@ export const GymEnrollment: React.FC<GymEnrollmentProps> = ({
                   type="text"
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
-                  placeholder="Enter your trainer handle..."
+                  placeholder="Enter unique student name (or TWILIGHTIVY for Instructor)..."
                   className="w-full bg-slate-50 border-2 border-slate-200 focus:border-indigo-600 focus:bg-white rounded-2xl px-4 py-3 text-sm text-slate-800 focus:outline-none transition-all font-bold shadow-xs"
                   required
                 />
+                <p className="text-[11px] font-semibold text-slate-500 leading-tight">
+                  {handle.trim().toUpperCase() === 'TWILIGHTIVY' ? (
+                    <span className="text-amber-600 font-bold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-xs">shield_person</span>
+                      Instructor Access (All Gyms Unlocked + Answer Key Access)
+                    </span>
+                  ) : (
+                    <span className="text-indigo-600 font-bold">
+                      Student Access: Unlocks Gym 1. Pass each Gym to unlock subsequent Gyms!
+                    </span>
+                  )}
+                </p>
               </div>
 
               {/* Clan Selection */}

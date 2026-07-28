@@ -11,6 +11,7 @@ interface HeaderProps {
     percentage: number;
   };
   onOpenSheetControl: () => void;
+  onToggleRole?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -19,6 +20,7 @@ export const Header: React.FC<HeaderProps> = ({
   trainer,
   quizProgress,
   onOpenSheetControl,
+  onToggleRole,
 }) => {
   const isAdmin = trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY';
 
@@ -91,10 +93,30 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             onClick={onOpenSheetControl}
             title="Quiz Answer & Control Spreadsheet (Instructor Secret Access)"
-            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-100 transition-all active:scale-95 cursor-pointer"
+            className="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-md shadow-emerald-100 transition-all active:scale-95 cursor-pointer"
           >
             <span className="material-symbols-outlined text-base">table_chart</span>
             <span className="hidden sm:inline">Answers & Sheet</span>
+          </button>
+        )}
+
+        {/* Quick Role Switcher Button for Testing */}
+        {onToggleRole && (
+          <button
+            onClick={onToggleRole}
+            title={isAdmin ? "Switch to Student View (Test locked gyms)" : "Switch to Instructor Mode (TWILIGHTIVY)"}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider border-2 transition-all cursor-pointer ${
+              isAdmin
+                ? 'bg-amber-50 text-amber-900 border-amber-300 hover:bg-amber-100'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+            }`}
+          >
+            <span className="material-symbols-outlined text-sm">
+              {isAdmin ? 'visibility' : 'admin_panel_settings'}
+            </span>
+            <span className="hidden md:inline">
+              {isAdmin ? 'Student View' : 'Instructor View'}
+            </span>
           </button>
         )}
 

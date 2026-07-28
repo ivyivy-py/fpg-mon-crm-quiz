@@ -5,6 +5,7 @@ export const GOOGLE_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1aFT9fni
 export const DEFAULT_SHEET_CONFIG: SheetConfig = {
   activeGym: 1, // Default active gym (from Config!B1)
   codeword: 'HANDSON2026', // Secret codeword provided by instructor to complete hands-on/quiz
+  webhookUrl: '', // Webhook URL to send student scores directly to Google Sheet
 };
 
 export const GYM_SECTIONS: GymSection[] = [

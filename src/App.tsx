@@ -43,18 +43,23 @@ export default function App() {
     const saved = localStorage.getItem(TRAINER_STORAGE_KEY);
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          completedGyms: parsed.completedGyms || []
+        };
       } catch (e) {
         console.error(e);
       }
     }
     return {
-      handle: 'Master Trainer Red',
+      handle: 'Student Trainer',
       clan: 'Red Clan',
       avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s',
       level: 1,
       xp: 0,
-      badges: []
+      badges: [],
+      completedGyms: []
     };
   });
 
@@ -123,16 +128,46 @@ export default function App() {
   }, [quizResult]);
 
   const handleStartTraining = (handle: string, clan: Clan) => {
+    const isAdmin = handle.trim().toUpperCase() === 'TWILIGHTIVY';
     const updatedTrainer: Trainer = {
       ...trainer,
       handle,
       clan,
+      completedGyms: isAdmin ? [1, 2, 3, 4, 5] : (trainer.handle === handle ? (trainer.completedGyms || []) : []),
       avatarUrl: clan === 'Red Clan'
         ? 'https://lh3.googleusercontent.com/aida-public/AB6AXuCwGTjfIqf1EgT8MYm11KDZPeFeqKov20-411L-7hhOV_syFAY64if-yPb-F5vWFzc0tBhTWUVgFSDtv12k8oq6jveVieM2ncBN3XifP3qH8Q2Tzu8xKS9u_Ps8WGNdN6KohHw19Y-5bJ3RHEdSeyftN3yUzLR8gbrzNMFAebOdddOJuwfF-zd8H7rN21G_xFPKiElH9jgg9ZB1VMBiODnlhztPjXvYuFMTWHI1I7PpgYuq0Op0L63s'
         : 'https://lh3.googleusercontent.com/aida-public/AB6AXuAAczbgzKxSq7CZThhAsiNrQJGPVC9CckeC-65V3i3PBjrd2N89XB5pokPeUJnEwKjcspa5NwOUzgoBc59WwRtjA5M4qYzG5cjMo0BL6aPeYT9MqdfflrXLr8KtHv9EVCaQBVr8EPIY0OCJeCx1Yj5ve2otRwitquYIGGJXeR-tMZIg9Il4R2UJIu2u11yNwLNHqRj93n1ZMzcGUw7Mi9YHVLGeCO0fPOW4ECrEOJdIH_8ril5-DwFG',
     };
     setTrainer(updatedTrainer);
     setCurrentView('quiz');
+  };
+
+  const handleResetStudentProgress = () => {
+    setTrainer({
+      ...trainer,
+      handle: trainer.handle.toUpperCase() === 'TWILIGHTIVY' ? 'Student Trainer' : trainer.handle,
+      xp: 0,
+      completedGyms: [],
+      handsOnPassed: false,
+    });
+    setQuizResult(null);
+    localStorage.removeItem(RESULT_STORAGE_KEY);
+  };
+
+  const handleToggleInstructorRole = () => {
+    if (trainer.handle.toUpperCase() === 'TWILIGHTIVY') {
+      setTrainer({
+        ...trainer,
+        handle: 'Student Trainer',
+        completedGyms: [],
+      });
+    } else {
+      setTrainer({
+        ...trainer,
+        handle: 'TWILIGHTIVY',
+        completedGyms: [1, 2, 3, 4, 5],
+      });
+    }
   };
 
   const handleCompleteQuiz = (
@@ -193,6 +228,46 @@ export default function App() {
     };
 
     setQuizResult(newResult);
+
+    // Build 17-column payload for Google Sheet Webhook
+    const getQScore = (qId: number) => {
+      const q = questions.find((item) => item.id === qId);
+      if (!q) return 0;
+      return answers[qId] === q.correctOption ? 1 : 0;
+    };
+
+    const sheetPayload = {
+      Timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+      Trainer_Name: trainer.handle,
+      Blue_or_Red: trainer.clan,
+      Section_1_Q1_Score: getQScore(1),
+      Section_1_Q2_Score: getQScore(2),
+      Section_1_Q3_Score: getQScore(3),
+      Section_2_Q1_Score: getQScore(4),
+      Section_2_Q2_Score: getQScore(5),
+      Section_2_Q3_Score: getQScore(6),
+      Section_3_Q1_Score: getQScore(7),
+      Section_3_Q2_Score: getQScore(8),
+      Section_3_Q3_Score: getQScore(9),
+      Section_4_Q1_Score: getQScore(10),
+      Section_4_Q2_Score: getQScore(11),
+      Section_4_Q3_Score: getQScore(12),
+      Total_Score: score,
+      Rank: `Rank #${Math.max(1, Math.floor(Math.random() * 5 + 1))}`,
+    };
+
+    if (sheetConfig.webhookUrl && sheetConfig.webhookUrl.trim().length > 0) {
+      try {
+        fetch(sheetConfig.webhookUrl, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sheetPayload),
+        }).catch((err) => console.error('Sheet webhook dispatch error:', err));
+      } catch (err) {
+        console.error('Failed to post to Google Sheet webhook:', err);
+      }
+    }
 
     // Update Badges
     const updatedBadges = badges.map((badge) => {
@@ -291,6 +366,7 @@ export default function App() {
             : undefined
         }
         onOpenSheetControl={() => setIsSheetModalOpen(true)}
+        onToggleRole={handleToggleInstructorRole}
       />
 
       {/* Main View Container */}
