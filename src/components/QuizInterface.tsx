@@ -39,13 +39,9 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
   }, [sheetConfig?.activeGym]);
 
   const handleSelectGymTab = (gymId: number) => {
-    if (checkGymUnlocked(gymId)) {
-      setSelectedGymId(gymId);
-      setCurrentIndex(0);
-      setIsAnswerSubmitted(false);
-    } else {
-      setLockedNoticeGym(gymId);
-    }
+    setSelectedGymId(gymId);
+    setCurrentIndex(0);
+    setIsAnswerSubmitted(false);
   };
 
   // Questions for current selected Gym 1-4

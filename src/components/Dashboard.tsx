@@ -56,8 +56,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <span className="material-symbols-outlined text-3xl">lock</span>
             </div>
             <div className="space-y-2">
-              <h3 className="text-xl font-black text-slate-800 uppercase tracking-tight">
-                Gym {lockedNoticeGym} is Locked!
+              <h3 className="text-xl font-black text-slate-800 tracking-tight">
+                Clear the previous gym and the learning to unlock
               </h3>
               <p className="text-xs font-semibold text-slate-600 leading-relaxed">
                 As a Student, you must complete and pass <strong className="text-indigo-600 font-extrabold">Gym {lockedNoticeGym - 1}</strong> first before unlocking Gym {lockedNoticeGym}.
