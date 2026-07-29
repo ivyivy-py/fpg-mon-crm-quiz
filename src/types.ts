@@ -80,9 +80,29 @@ export interface Badge {
 }
 
 export interface SheetConfig {
-  activeGym: number; // 1, 2, 3, 4, 5 (from Config!B1)
+  activeGym: number; // 1, 2, 3, 4, 5 (from Config!B1 / Open Gym in Instructor View)
   codeword: string;  // Codeword required to pass hands-on / quiz
   webhookUrl?: string; // Google Apps Script Webhook URL to record student scores
+}
+
+export interface StudentResponseRecord {
+  Timestamp: string;
+  Student_Name: string;
+  Blue_or_Red: string;
+  Section_1_Q1_Score: number;
+  Section_1_Q2_Score: number;
+  Section_1_Q3_Score: number;
+  Section_2_Q1_Score: number;
+  Section_2_Q2_Score: number;
+  Section_2_Q3_Score: number;
+  Section_3_Q1_Score: number;
+  Section_3_Q2_Score: number;
+  Section_3_Q3_Score: number;
+  Section_4_Q1_Score: number;
+  Section_4_Q2_Score: number;
+  Section_4_Q3_Score: number;
+  Total_Score: number;
+  Rank: number | string;
 }
 
 export type ViewState = 'enrollment' | 'quiz' | 'certificate' | 'leaderboard' | 'inventory' | 'dashboard';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ViewState, Trainer, Question, Badge, QuizResult, LeaderboardEntry, Clan, SheetConfig } from './types';
+import { ViewState, Trainer, Question, Badge, QuizResult, LeaderboardEntry, Clan, SheetConfig, StudentResponseRecord } from './types';
 import { INITIAL_QUESTIONS, INITIAL_BADGES, INITIAL_LEADERBOARD, DEFAULT_SHEET_CONFIG } from './data/quizData';
 import { Header } from './components/Header';
 import { GymEnrollment } from './components/GymEnrollment';
@@ -16,6 +16,7 @@ const QUESTIONS_STORAGE_KEY = 'sfmc_quiz_questions';
 const BADGES_STORAGE_KEY = 'sfmc_badges_unlocked';
 const RESULT_STORAGE_KEY = 'sfmc_last_quiz_result';
 const SHEET_CONFIG_STORAGE_KEY = 'sfmc_sheet_config';
+const SUBMISSIONS_STORAGE_KEY = 'sfmc_student_submissions';
 
 export default function App() {
   const [currentView, setCurrentView] = useState<ViewState>('enrollment');

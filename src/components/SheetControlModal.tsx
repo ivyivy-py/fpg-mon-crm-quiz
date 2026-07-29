@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Question, SheetConfig, Trainer } from '../types';
+import { Question, SheetConfig, Trainer, StudentResponseRecord } from '../types';
 import { GOOGLE_SHEET_URL, GYM_SECTIONS } from '../data/quizData';
 
 interface SheetControlModalProps {
@@ -12,6 +12,8 @@ interface SheetControlModalProps {
   onUpdateSheetConfig: (config: SheetConfig) => void;
   onResetStudentProgress?: () => void;
   trainer?: Trainer;
+  studentSubmissions?: StudentResponseRecord[];
+  onClearSubmissions?: () => void;
 }
 
 export const SheetControlModal: React.FC<SheetControlModalProps> = ({
@@ -24,15 +26,96 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
   onUpdateSheetConfig,
   onResetStudentProgress,
   trainer,
+  studentSubmissions = [],
+  onClearSubmissions,
 }) => {
   const [csvUrl, setCsvUrl] = useState('https://docs.google.com/spreadsheets/d/1aFT9fnia3stfbdl7KX185FD4Ke-1S1m2DvWGKMTpGlA/export?format=csv&gid=994678157');
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
   const [showSheetEmbed, setShowSheetEmbed] = useState(false);
+  const [copiedNotice, setCopiedNotice] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [tempCorrect, setTempCorrect] = useState<'A' | 'B' | 'C' | 'D'>('B');
   const [tempExplanation, setTempExplanation] = useState('');
 
-  if (!isOpen) return null;
+  const headers = [
+    'Timestamp',
+    'Student_Name',
+    'Blue_or_Red',
+    'Section_1_Q1_Score',
+    'Section_1_Q2_Score',
+    'Section_1_Q3_Score',
+    'Section_2_Q1_Score',
+    'Section_2_Q2_Score',
+    'Section_2_Q3_Score',
+    'Section_3_Q1_Score',
+    'Section_3_Q2_Score',
+    'Section_3_Q3_Score',
+    'Section_4_Q1_Score',
+    'Section_4_Q2_Score',
+    'Section_4_Q3_Score',
+    'Total_Score',
+    'Rank',
+  ];
+
+  const handleCopyForGoogleSheets = () => {
+    const headerRow = headers.join('\t');
+    const rows = studentSubmissions.map((s) => [
+      s.Timestamp,
+      s.Student_Name,
+      s.Blue_or_Red,
+      s.Section_1_Q1_Score,
+      s.Section_1_Q2_Score,
+      s.Section_1_Q3_Score,
+      s.Section_2_Q1_Score,
+      s.Section_2_Q2_Score,
+      s.Section_2_Q3_Score,
+      s.Section_3_Q1_Score,
+      s.Section_3_Q2_Score,
+      s.Section_3_Q3_Score,
+      s.Section_4_Q1_Score,
+      s.Section_4_Q2_Score,
+      s.Section_4_Q3_Score,
+      s.Total_Score,
+      s.Rank,
+    ].join('\t'));
+
+    const fullContent = [headerRow, ...rows].join('\n');
+    navigator.clipboard.writeText(fullContent).then(() => {
+      setCopiedNotice(true);
+      setTimeout(() => setCopiedNotice(false), 3000);
+    });
+  };
+
+  const handleDownloadCsv = () => {
+    const headerRow = headers.join(',');
+    const rows = studentSubmissions.map((s) => [
+      `"${s.Timestamp}"`,
+      `"${s.Student_Name}"`,
+      `"${s.Blue_or_Red}"`,
+      s.Section_1_Q1_Score,
+      s.Section_1_Q2_Score,
+      s.Section_1_Q3_Score,
+      s.Section_2_Q1_Score,
+      s.Section_2_Q2_Score,
+      s.Section_2_Q3_Score,
+      s.Section_3_Q1_Score,
+      s.Section_3_Q2_Score,
+      s.Section_3_Q3_Score,
+      s.Section_4_Q1_Score,
+      s.Section_4_Q2_Score,
+      s.Section_4_Q3_Score,
+      s.Total_Score,
+      `"${s.Rank}"`,
+    ].join(','));
+
+    const csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent([headerRow, ...rows].join('\n'));
+    const link = document.createElement('a');
+    link.setAttribute('href', csvContent);
+    link.setAttribute('download', `student_quiz_responses_${new Date().toISOString().substring(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleStartEdit = (q: Question) => {
     setEditingQuestionId(q.id);
@@ -186,16 +269,18 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
           <div className="bg-indigo-50/70 border-2 border-indigo-200 p-5 rounded-3xl space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b-2 border-indigo-100 pb-3">
               <div>
-                <span className="text-xs font-black text-indigo-700 uppercase tracking-widest block">
-                  Tab "Config" - Cell B1: Active Gym Selector
+                <span className="text-xs font-black text-indigo-700 uppercase tracking-widest block flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">lock_open</span>
+                  Instructor Open Gym Manual Selector (Gyms 1, 2, 3, 4, 5)
                 </span>
                 <p className="text-xs font-medium text-slate-600">
-                  Select which Gym section is currently active for students:
+                  Select which Gym is open for students. Requirement: Student must have passed Gym N-1 <strong className="text-indigo-700 font-extrabold">AND</strong> Instructor must set Open Gym to N or higher.
                 </p>
               </div>
 
-              <span className="bg-indigo-600 text-white text-xs font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                Active: Gym {sheetConfig.activeGym} ({activeGymObj.shortTitle})
+              <span className="bg-indigo-600 text-white text-xs font-black px-3.5 py-1.5 rounded-full uppercase tracking-wider shadow-sm flex items-center gap-1">
+                <span>Instructor Open Gym: Gym {sheetConfig.activeGym}</span>
+                <span className="text-indigo-200">({activeGymObj.shortTitle})</span>
               </span>
             </div>
 
@@ -216,7 +301,7 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
                     <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
                       isActive ? 'bg-white/20 text-white' : 'bg-indigo-100 text-indigo-700'
                     }`}>
-                      {gym.bubbleLabel}
+                      {gym.bubbleLabel} {isActive ? '• OPEN' : ''}
                     </span>
                     <span className="text-xs font-black leading-tight">{gym.shortTitle}</span>
                     <span className="material-symbols-outlined text-sm">{gym.icon}</span>
@@ -255,6 +340,97 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
             </div>
           </div>
 
+          {/* Captured Student Quiz Responses Section */}
+          <div className="bg-slate-900 text-white p-5 rounded-3xl border-2 border-slate-800 space-y-4 shadow-xl">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span className="text-xs font-black text-emerald-400 uppercase tracking-widest block flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-base">table_chart</span>
+                  Captured Student Quiz Responses ({studentSubmissions.length} Recorded)
+                </span>
+                <p className="text-xs font-medium text-slate-400">
+                  Exact 17 columns formatted for Google Sheet logging.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleCopyForGoogleSheets}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <span className="material-symbols-outlined text-base">content_copy</span>
+                  <span>{copiedNotice ? 'Copied to Clipboard!' : 'Copy for Google Sheets'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleDownloadCsv}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-xl transition-all flex items-center gap-1.5 cursor-pointer shadow-md"
+                >
+                  <span className="material-symbols-outlined text-base">download</span>
+                  <span>Download CSV</span>
+                </button>
+
+                {onClearSubmissions && studentSubmissions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={onClearSubmissions}
+                    className="bg-rose-900/60 hover:bg-rose-800 text-rose-200 text-xs font-black uppercase tracking-wider px-3 py-2 rounded-xl transition-all cursor-pointer"
+                  >
+                    Clear Log
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {studentSubmissions.length === 0 ? (
+              <div className="p-6 text-center border-2 border-dashed border-slate-800 rounded-2xl text-slate-500 space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider">No Student Submissions Captured Yet</p>
+                <p className="text-[11px]">When students complete a Gym quiz, their responses will populate here with all 17 columns.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-800 rounded-2xl max-h-72">
+                <table className="w-full text-left text-[11px] font-mono">
+                  <thead className="bg-slate-800 text-emerald-400 sticky top-0 uppercase tracking-wider font-bold">
+                    <tr>
+                      {headers.map((h) => (
+                        <th key={h} className="p-2.5 whitespace-nowrap border-b border-slate-700">{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800 text-slate-300">
+                    {studentSubmissions.map((s, idx) => (
+                      <tr key={idx} className="hover:bg-slate-800/50 transition-colors">
+                        <td className="p-2.5 whitespace-nowrap font-sans font-semibold text-slate-400">{s.Timestamp}</td>
+                        <td className="p-2.5 whitespace-nowrap font-bold text-white">{s.Student_Name}</td>
+                        <td className="p-2.5 whitespace-nowrap">
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-extrabold ${s.Blue_or_Red?.includes('Blue') ? 'bg-blue-900/80 text-blue-200' : 'bg-rose-900/80 text-rose-200'}`}>
+                            {s.Blue_or_Red}
+                          </span>
+                        </td>
+                        <td className="p-2.5 text-center">{s.Section_1_Q1_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_1_Q2_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_1_Q3_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_2_Q1_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_2_Q2_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_2_Q3_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_3_Q1_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_3_Q2_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_3_Q3_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_4_Q1_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_4_Q2_Score}</td>
+                        <td className="p-2.5 text-center">{s.Section_4_Q3_Score}</td>
+                        <td className="p-2.5 text-center font-bold text-amber-300">{s.Total_Score}</td>
+                        <td className="p-2.5 whitespace-nowrap font-bold text-indigo-300">{s.Rank}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
           {/* Apps Script Score Submission Format Helper Card */}
           <div className="bg-indigo-950 text-white p-5 rounded-3xl border-2 border-indigo-900 space-y-3 shadow-lg">
             <div className="flex items-center justify-between">
@@ -271,7 +447,7 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
 
             <p className="text-xs font-medium text-slate-300 leading-relaxed">
               When students submit their scores, the app posts to the Webhook with these exact 17 columns: <br/>
-              <code className="text-amber-300 text-[11px]">Timestamp | Trainer_Name | Blue_or_Red | Section_1_Q1_Score ... Section_4_Q3_Score | Total_Score | Rank</code>
+              <code className="text-amber-300 text-[11px]">Timestamp | Student_Name | Blue_or_Red | Section_1_Q1_Score ... Section_4_Q3_Score | Total_Score | Rank</code>
             </p>
 
             <details className="text-xs group">
@@ -285,7 +461,7 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
   var data = JSON.parse(e.postData.contents);
   sheet.appendRow([
     data.Timestamp,
-    data.Trainer_Name,
+    data.Student_Name,
     data.Blue_or_Red,
     data.Section_1_Q1_Score,
     data.Section_1_Q2_Score,
