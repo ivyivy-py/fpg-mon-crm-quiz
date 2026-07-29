@@ -12,7 +12,9 @@ export const Inventory: React.FC<InventoryProps> = ({
   trainer,
   onStartQuiz,
 }) => {
-  const unlockedCount = badges.filter((b) => b.unlocked).length;
+  const gymBadges = badges.filter((b) => b.gymId);
+  const gymUnlockedCount = gymBadges.filter((b) => b.unlocked).length;
+  const masterBadge = badges.find((b) => b.id === 'b_master');
 
   return (
     <div className="min-h-[calc(100vh-80px)] px-4 md:px-12 py-8 max-w-5xl mx-auto space-y-8">
@@ -27,13 +29,13 @@ export const Inventory: React.FC<InventoryProps> = ({
             {trainer.handle}'s Badges & Trophy Cabinet
           </h1>
           <p className="text-xs md:text-sm font-semibold text-slate-500 max-w-xl">
-            Earn badges across all 5 SFMC Training Gyms (including the Gym 5 Group Hands-on Session) to unlock your Master Certificate!
+            Clear all 5 SFMC Training Gyms (including the Gym 5 Group Hands-on Session) to claim your Master Certificate!
           </p>
         </div>
 
-        <div className="bg-indigo-50 p-4 px-6 rounded-2xl border-2 border-indigo-100 text-center min-w-[140px]">
-          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Unlocked Badges</p>
-          <p className="text-3xl font-black text-indigo-600">{unlockedCount} / {badges.length}</p>
+        <div className="bg-indigo-50 p-4 px-6 rounded-2xl border-2 border-indigo-100 text-center min-w-[150px]">
+          <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest">Gym Badges Cleared</p>
+          <p className="text-3xl font-black text-indigo-600">{gymUnlockedCount} / 5</p>
         </div>
       </div>
 

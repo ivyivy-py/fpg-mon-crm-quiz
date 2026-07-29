@@ -25,8 +25,9 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
   onResetStudentProgress,
   trainer,
 }) => {
-  const [csvUrl, setCsvUrl] = useState('');
+  const [csvUrl, setCsvUrl] = useState('https://docs.google.com/spreadsheets/d/1aFT9fnia3stfbdl7KX185FD4Ke-1S1m2DvWGKMTpGlA/export?format=csv&gid=994678157');
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [showSheetEmbed, setShowSheetEmbed] = useState(false);
   const [editingQuestionId, setEditingQuestionId] = useState<number | null>(null);
   const [tempCorrect, setTempCorrect] = useState<'A' | 'B' | 'C' | 'D'>('B');
   const [tempExplanation, setTempExplanation] = useState('');
@@ -146,16 +147,40 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
               </p>
             </div>
 
-            <a
-              href={GOOGLE_SHEET_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-3 rounded-2xl shadow-md shadow-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>Open Google Sheet</span>
-              <span className="material-symbols-outlined text-base">open_in_new</span>
-            </a>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setShowSheetEmbed(!showSheetEmbed)}
+                className="bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border-2 border-emerald-300 text-xs font-black uppercase tracking-wider px-4 py-3 rounded-2xl transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-base">preview</span>
+                <span>{showSheetEmbed ? 'Hide Sheet View' : 'Preview Sheet'}</span>
+              </button>
+              <a
+                href={GOOGLE_SHEET_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black uppercase tracking-wider px-5 py-3 rounded-2xl shadow-md shadow-emerald-200 transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Open Google Sheet</span>
+                <span className="material-symbols-outlined text-base">open_in_new</span>
+              </a>
+            </div>
           </div>
+
+          {showSheetEmbed && (
+            <div className="border-4 border-emerald-300 rounded-3xl overflow-hidden shadow-xl bg-slate-900 space-y-1">
+              <div className="bg-emerald-800 text-white px-4 py-2 text-xs font-black uppercase tracking-wider flex justify-between items-center">
+                <span>Integrated Google Sheet Preview (ID: 1aFT9fnia3stfbdl7KX185FD4Ke-1S1m2DvWGKMTpGlA)</span>
+                <button onClick={() => setShowSheetEmbed(false)} className="hover:text-emerald-200">✕</button>
+              </div>
+              <iframe
+                src="https://docs.google.com/spreadsheets/d/1aFT9fnia3stfbdl7KX185FD4Ke-1S1m2DvWGKMTpGlA/htmlembed?gid=994678157&widget=true"
+                className="w-full h-80 border-0"
+                title="Google Sheet Live View"
+              />
+            </div>
+          )}
 
           {/* CONFIG!B1 Active Gym Control Section */}
           <div className="bg-indigo-50/70 border-2 border-indigo-200 p-5 rounded-3xl space-y-4">

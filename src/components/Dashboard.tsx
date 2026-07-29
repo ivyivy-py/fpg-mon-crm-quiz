@@ -37,7 +37,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
     if (isAdmin) return true;
     if (gymId === 1) return true;
     const completed = trainer.completedGyms || [];
-    return completed.includes(gymId - 1);
+    const activeConfigGym = sheetConfig?.activeGym || 1;
+    return completed.includes(gymId - 1) && activeConfigGym >= gymId;
   };
 
   const handleGymClick = (gymId: number) => {

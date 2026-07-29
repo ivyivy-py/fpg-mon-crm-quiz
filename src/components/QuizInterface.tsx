@@ -24,7 +24,8 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
     if (isAdmin) return true;
     if (gymId === 1) return true;
     const completed = trainer.completedGyms || [];
-    return completed.includes(gymId - 1);
+    const activeConfigGym = sheetConfig?.activeGym || 1;
+    return completed.includes(gymId - 1) && activeConfigGym >= gymId;
   };
 
   const initialGym = sheetConfig?.activeGym && checkGymUnlocked(sheetConfig.activeGym) ? sheetConfig.activeGym : 1;
@@ -177,7 +178,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
                 Gym {lockedNoticeGym} is Locked!
               </h3>
               <p className="text-xs font-semibold text-slate-600 leading-relaxed">
-                As a Student, you must complete and pass <strong className="text-indigo-600 font-extrabold">Gym {lockedNoticeGym - 1}</strong> first before unlocking Gym {lockedNoticeGym}.
+                As a Student, you must complete <strong className="text-indigo-600 font-extrabold">Gym {lockedNoticeGym - 1}</strong> AND the Instructor must set the Active Gym in Config to Gym {lockedNoticeGym} or higher to unlock this section.
               </p>
             </div>
             <button
@@ -273,7 +274,7 @@ export const QuizInterface: React.FC<QuizInterfaceProps> = ({
               </h2>
 
               <p className="text-xs md:text-sm font-semibold text-slate-600 leading-relaxed max-w-md mx-auto">
-                As a Student, you must complete and pass all questions in <strong className="text-indigo-600">Gym {selectedGymId - 1}</strong> first before unlocking Gym {selectedGymId}.
+                As a Student, you must complete and pass all questions in <strong className="text-indigo-600">Gym {selectedGymId - 1}</strong> AND the Instructor must set the active Config Gym to Gym {selectedGymId} or higher to unlock this section.
               </p>
             </div>
 
