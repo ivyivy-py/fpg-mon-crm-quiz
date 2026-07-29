@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Question, SheetConfig } from '../types';
+import { Question, SheetConfig, Trainer } from '../types';
 import { GOOGLE_SHEET_URL, GYM_SECTIONS } from '../data/quizData';
 
 interface SheetControlModalProps {
@@ -11,6 +11,7 @@ interface SheetControlModalProps {
   sheetConfig: SheetConfig;
   onUpdateSheetConfig: (config: SheetConfig) => void;
   onResetStudentProgress?: () => void;
+  trainer?: Trainer;
 }
 
 export const SheetControlModal: React.FC<SheetControlModalProps> = ({
@@ -22,6 +23,7 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
   sheetConfig,
   onUpdateSheetConfig,
   onResetStudentProgress,
+  trainer,
 }) => {
   const [csvUrl, setCsvUrl] = useState('');
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -309,7 +311,7 @@ export const SheetControlModal: React.FC<SheetControlModalProps> = ({
           </div>
 
           {/* Reset Student Entries / Clear Local Test Data */}
-          {onResetStudentProgress && (
+          {onResetStudentProgress && trainer?.handle?.trim().toUpperCase() === 'TWILIGHTIVY' && (
             <div className="bg-rose-50 border-2 border-rose-200 rounded-3xl p-4 flex flex-wrap items-center justify-between gap-3">
               <div className="space-y-0.5">
                 <p className="text-xs font-black text-rose-900 uppercase tracking-wider flex items-center gap-1.5">

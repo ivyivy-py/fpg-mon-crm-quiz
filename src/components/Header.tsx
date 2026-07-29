@@ -23,6 +23,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleRole,
 }) => {
   const isAdmin = trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY';
+  const isAllGymsCompleted = [1, 2, 3, 4, 5].every((id) => (trainer.completedGyms || []).includes(id)) || isAdmin;
 
   return (
     <header className="bg-white sticky top-0 z-50 border-b-4 border-indigo-200 shadow-sm px-4 md:px-10 h-20 flex justify-between items-center w-full">
@@ -86,6 +87,18 @@ export const Header: React.FC<HeaderProps> = ({
           >
             Your Collection
           </button>
+          {isAllGymsCompleted && (
+            <button
+              onClick={() => onNavigate('certificate')}
+              className={`px-4 py-2 rounded-xl transition-all cursor-pointer ${
+                currentView === 'certificate'
+                  ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
+                  : 'text-slate-600 hover:bg-indigo-50 hover:text-indigo-600'
+              }`}
+            >
+              Certificate
+            </button>
+          )}
         </nav>
 
         {/* Answers & Sheet Control - Secretly available ONLY for TWILIGHTIVY */}

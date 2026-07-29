@@ -44,10 +44,6 @@ export const GymEnrollment: React.FC<GymEnrollmentProps> = ({
             </div>
 
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-1.5 bg-indigo-100 text-indigo-700 px-3.5 py-1 rounded-full text-xs font-black uppercase tracking-wider border-2 border-indigo-200">
-                <span className="material-symbols-outlined text-sm">verified</span>
-                GYM 04: WELCOME PORTAL
-              </div>
               <h1 className="text-3xl md:text-5xl font-black text-slate-800 tracking-tight leading-tight">
                 Master the Journey, <br className="hidden sm:inline"/>
                 <span className="text-indigo-600">Claim your Badge.</span>
@@ -176,7 +172,7 @@ export const GymEnrollment: React.FC<GymEnrollmentProps> = ({
                 <p className="text-[11px] text-slate-400 font-bold uppercase tracking-widest">
                   Secure connection established • SFMC 2026
                 </p>
-                {onResetStudentProgress && (
+                {onResetStudentProgress && handle.trim().toUpperCase() === 'TWILIGHTIVY' && (
                   <button
                     type="button"
                     onClick={onResetStudentProgress}

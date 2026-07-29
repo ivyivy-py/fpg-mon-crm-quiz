@@ -376,7 +376,13 @@ export default function App() {
       origin: { y: 0.6 }
     });
 
-    setCurrentView('certificate');
+    const isAllGymsPassed = [1, 2, 3, 4, 5].every((g) => finalCompletedGyms.includes(g)) || trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY';
+
+    if (isAllGymsPassed) {
+      setCurrentView('certificate');
+    } else {
+      setCurrentView('dashboard');
+    }
   };
 
   const handleResetQuestions = () => {
@@ -425,11 +431,31 @@ export default function App() {
         )}
 
         {currentView === 'certificate' && (
-          <MasteryCertificate
-            trainer={trainer}
-            quizResult={quizResult}
-            onRestartQuiz={() => setCurrentView('quiz')}
-          />
+          ([1, 2, 3, 4, 5].every((g) => (trainer.completedGyms || []).includes(g)) || trainer.handle.trim().toUpperCase() === 'TWILIGHTIVY') ? (
+            <MasteryCertificate
+              trainer={trainer}
+              quizResult={quizResult}
+              onRestartQuiz={() => setCurrentView('quiz')}
+            />
+          ) : (
+            <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center p-6 text-center space-y-4">
+              <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center border-2 border-amber-200">
+                <span className="material-symbols-outlined text-3xl">lock</span>
+              </div>
+              <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
+                Certificate Locked
+              </h2>
+              <p className="text-sm font-semibold text-slate-600 max-w-md leading-relaxed">
+                You must complete all 5 SFMC Training Gyms (Gyms 1 to 5) before unlocking your official Master Trainer Certificate!
+              </p>
+              <button
+                onClick={() => setCurrentView('dashboard')}
+                className="bg-indigo-600 text-white font-black px-6 py-3 rounded-2xl text-xs uppercase tracking-wider shadow-md hover:bg-indigo-700 cursor-pointer transition-all active:scale-95"
+              >
+                Return to Arena Dashboard
+              </button>
+            </div>
+          )
         )}
 
         {currentView === 'leaderboard' && (
@@ -471,6 +497,7 @@ export default function App() {
         sheetConfig={sheetConfig}
         onUpdateSheetConfig={setSheetConfig}
         onResetStudentProgress={handleResetStudentProgress}
+        trainer={trainer}
       />
 
       {/* Universal Footer */}

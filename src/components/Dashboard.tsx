@@ -30,6 +30,8 @@ export const Dashboard: React.FC<DashboardProps> = ({
   const scorePercent = totalQuestions > 0 ? Math.round((passedQuestions / totalQuestions) * 100) : 0;
 
   const activeGym = sheetConfig?.activeGym || 1;
+  const completedGyms = trainer.completedGyms || [];
+  const isAllGymsCompleted = [1, 2, 3, 4, 5].every((id) => completedGyms.includes(id)) || isAdmin;
 
   const checkGymUnlocked = (gymId: number) => {
     if (isAdmin) return true;
@@ -286,14 +288,41 @@ export const Dashboard: React.FC<DashboardProps> = ({
       {/* Quick Navigation Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div
-          onClick={() => onNavigate('certificate')}
-          className="glass-card rounded-[32px] p-6 border-2 border-indigo-100 bg-white shadow-md hover:shadow-xl transition-all cursor-pointer space-y-3 group"
+          onClick={() => {
+            if (isAllGymsCompleted) {
+              onNavigate('certificate');
+            } else {
+              setLockedNoticeGym(5);
+            }
+          }}
+          className={`glass-card rounded-[32px] p-6 border-2 transition-all space-y-3 group ${
+            isAllGymsCompleted
+              ? 'border-indigo-200 bg-white shadow-md hover:shadow-xl cursor-pointer'
+              : 'border-slate-200 bg-slate-50 opacity-80 cursor-not-allowed'
+          }`}
         >
-          <div className="w-12 h-12 rounded-2xl bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:scale-110 transition-transform font-bold">
-            <span className="material-symbols-outlined text-2xl">verified</span>
+          <div className="flex items-center justify-between">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold ${
+              isAllGymsCompleted ? 'bg-indigo-100 text-indigo-600 group-hover:scale-110 transition-transform' : 'bg-slate-200 text-slate-500'
+            }`}>
+              <span className="material-symbols-outlined text-2xl">
+                {isAllGymsCompleted ? 'verified' : 'lock'}
+              </span>
+            </div>
+            <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border ${
+              isAllGymsCompleted
+                ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
+                : 'bg-slate-200 text-slate-600 border-slate-300'
+            }`}>
+              {isAllGymsCompleted ? 'Unlocked' : `Locked (${completedGyms.length}/5 Gyms)`}
+            </span>
           </div>
           <h3 className="font-black text-lg text-slate-800 uppercase tracking-tight">Mastery Certificate</h3>
-          <p className="text-xs font-medium text-slate-500 leading-relaxed">View and download your official SFMC Board of Certification award.</p>
+          <p className="text-xs font-medium text-slate-500 leading-relaxed">
+            {isAllGymsCompleted
+              ? 'View and download your official SFMC Board of Certification award.'
+              : 'Complete all 5 Gym sections (including Gym 5 Group Workshop) to unlock your official certificate.'}
+          </p>
         </div>
 
         <div
